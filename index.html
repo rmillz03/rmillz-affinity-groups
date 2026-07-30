@@ -198,6 +198,8 @@
 		  <div id="submission-form">
 		    <input type="text" id="theme-input" placeholder="e.g. Ancient Technology & Magic" />
 		    <button id="save-theme-btn">Save Theme</button>
+		    <!-- Dynamic feedback message -->
+		    <p id="submission-feedback-msg" class="hidden" style="color: var(--success); font-size: 0.875rem; font-weight: bold; margin-top: 0.5rem; text-align: center;"></p>
 		  </div>
 		  <p id="submission-locked-msg" class="hidden" style="color: var(--subtext);">
 		    🔒 Submissions are locked for this round.
@@ -215,12 +217,27 @@
         </div>
 
         <!-- Assigned Theme Display -->
-        <div class="card" style="text-align: center;">
-          <h3>2. Your Assigned Theme</h3>
-          <div id="theme-display" style="font-size: 1.25rem; font-weight: bold; margin-top: 1rem; color: #a7f3d0;">
-            Waiting on admin...
-          </div>
-        </div>
+        <!-- Commander Drafting Area -->
+		<div class="card">
+		  <h3>Your Assigned Commanders (5 Slots)</h3>
+		  
+		  <!-- Detailed Instructions Box -->
+		  <div style="background: #111827; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--subtext); line-height: 1.4;">
+		    <strong style="color: var(--text);">📖 How to Play:</strong>
+		    <ul style="margin: 0.5rem 0 0 1.2rem; padding: 0;">
+		      <li><strong>Redraw (up to 3x per slot):</strong> Re-rolls that slot for a new available commander from the global pool.</li>
+		      <li><strong>Keep:</strong> Locks in that specific commander and disables its Redraw button.</li>
+		      <li><strong>Submit Final Deck Choice:</strong> Requires at least 1 kept commander. <span style="color: #fcd34d;">⚠️ Submitting is FINAL. Any commanders NOT kept will be immediately returned to the shared pool for other players to draw!</span></li>
+		    </ul>
+		  </div>
+		
+		  <div id="commanders-container">
+		    <p style="color: var(--subtext); text-align: center;">Waiting on admin to start assignment...</p>
+		  </div>
+		
+		  <button id="submit-commanders-btn" class="btn-success" disabled style="margin-top: 1.5rem;">Submit Final Deck Choice</button>
+		  <p id="commanders-locked-msg" class="hidden error" style="text-align:center;">🔒 Final deck selection locked and submitted!</p>
+		</div>
 
       </div>
 
@@ -496,12 +513,40 @@
   }
 
   // ================= TAB 1: SECRET SANTA LOGIC =================
-  saveThemeBtn.addEventListener('click', async () => {
-    const text = themeInput.value.trim();
-    if (!text) return;
-    await setDoc(doc(db, "users", currentUser.uid), { submittedTheme: text }, { merge: true });
-    alert("Theme saved!");
-  });
+  	// SAVE SUBMISSION WITH IN-PAGE FEEDBACK
+	const submissionFeedbackMsg = document.getElementById('submission-feedback-msg');
+	
+	saveThemeBtn.addEventListener('click', async () => {
+	  const text = themeInput.value.trim();
+	  if (!text) return;
+	
+	  try {
+	    saveThemeBtn.disabled = true;
+	    saveThemeBtn.textContent = "Saving...";
+	
+	    await setDoc(doc(db, "users", currentUser.uid), { submittedTheme: text }, { merge: true });
+	
+	    // Display inline confirmation message
+	    submissionFeedbackMsg.textContent = "✓ Theme saved successfully!";
+	    submissionFeedbackMsg.classList.remove('hidden');
+	
+	    // Reset button state
+	    saveThemeBtn.disabled = false;
+	    saveThemeBtn.textContent = "Save Theme";
+	
+	    // Auto-hide success message after 3 seconds
+	    setTimeout(() => {
+	      submissionFeedbackMsg.classList.add('hidden');
+	    }, 3000);
+	
+	  } catch (err) {
+	    submissionFeedbackMsg.textContent = "❌ Error saving theme. Try again.";
+	    submissionFeedbackMsg.style.color = "var(--danger)";
+	    submissionFeedbackMsg.classList.remove('hidden');
+	    saveThemeBtn.disabled = false;
+	    saveThemeBtn.textContent = "Save Theme";
+	  }
+	});
 
   randomizeThemesBtn.addEventListener('click', async () => {
     const usersSnap = await getDocs(collection(db, "users"));
@@ -666,26 +711,36 @@
   }
 
   // Handle Final Submission
-  submitCommandersBtn.addEventListener('click', async () => {
-    const currentCommanders = [...userDocData.commanders];
-    const keptCommanders = currentCommanders.filter(c => c.kept);
-    const unkeptCommanders = currentCommanders.filter(c => !c.kept).map(c => c.name);
-
-    // Return unkept commanders back to the global pool
-    if (unkeptCommanders.length > 0) {
-      await updateDoc(doc(db, "global", "state"), {
-        commanderPool: arrayUnion(...unkeptCommanders)
-      });
-    }
-
-    // Lock user submission and preserve only kept commanders
-    await updateDoc(doc(db, "users", currentUser.uid), {
-      commanders: keptCommanders,
-      commanderSubmitted: true
-    });
-
-    alert("Final deck selection locked and submitted!");
-  });
+	submitCommandersBtn.addEventListener('click', async () => {
+	  const currentCommanders = [...userDocData.commanders];
+	  const keptCommanders = currentCommanders.filter(c => c.kept);
+	  const unkeptCommanders = currentCommanders.filter(c => !c.kept).map(c => c.name);
+	
+	  // Confirmation dialog
+	  const confirmSubmit = confirm(
+	    `Are you sure you want to submit?\n\n` +
+	    `• You are keeping ${keptCommanders.length} commander(s).\n` +
+	    `• ${unkeptCommanders.length} unkept commander(s) will be returned to the pool.\n\n` +
+	    `This action cannot be undone.`
+	  );
+	
+	  if (!confirmSubmit) return;
+	
+	  // Return unkept commanders back to global pool
+	  if (unkeptCommanders.length > 0) {
+	    await updateDoc(doc(db, "global", "state"), {
+	      commanderPool: arrayUnion(...unkeptCommanders)
+	    });
+	  }
+	
+	  // Lock user submission and preserve only kept commanders
+	  await updateDoc(doc(db, "users", currentUser.uid), {
+	    commanders: keptCommanders,
+	    commanderSubmitted: true
+	  });
+	
+	  alert("Final deck selection locked and submitted!");
+	});
 
 	// ================= EVENT RESET =================
 	// RESET EVENT 1 (Secret Santa)
