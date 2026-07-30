@@ -198,8 +198,10 @@
 		  <div id="submission-form">
 		    <input type="text" id="theme-input" placeholder="e.g. Ancient Technology & Magic" />
 		    <button id="save-theme-btn">Save Theme</button>
-		    <!-- Dynamic feedback message -->
-		    <p id="submission-feedback-msg" class="hidden" style="color: var(--success); font-size: 0.875rem; font-weight: bold; margin-top: 0.5rem; text-align: center;"></p>
+		    <!-- Constant indicator for the last saved theme -->
+		    <p id="last-saved-theme-display" style="font-size: 0.875rem; color: #a7f3d0; margin-top: 0.75rem;">
+		      <strong>Last Saved Theme:</strong> <span id="last-saved-value"></span>
+		    </p>
 		  </div>
 		  <p id="submission-locked-msg" class="hidden" style="color: var(--subtext);">
 		    🔒 Submissions are locked for this round.
@@ -481,6 +483,16 @@
     onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
       if (docSnap.exists()) {
         userDocData = docSnap.data();
+
+		// Update theme input and constant "Last Saved Theme" indicator
+	    if (userDocData.submittedTheme) {
+	      if (!themeInput.value) {
+	        themeInput.value = userDocData.submittedTheme;
+	      }
+	      lastSavedValue.textContent = userDocData.submittedTheme;
+	    } else {
+	      lastSavedValue.textContent = '""'; // Default empty string state
+	    }
         
         // Tab 1 Reg View
         if (userDocData.regEvent1) {
@@ -515,72 +527,67 @@
   // ================= TAB 1: SECRET SANTA LOGIC =================
   	// SAVE SUBMISSION WITH IN-PAGE FEEDBACK
 	const submissionFeedbackMsg = document.getElementById('submission-feedback-msg');
+	const lastSavedValue = document.getElementById('last-saved-value');
 	
+	// SAVE SUBMISSION LOGIC
 	saveThemeBtn.addEventListener('click', async () => {
 	  const text = themeInput.value.trim();
 	  if (!text) return;
 	
 	  try {
-	    saveThemeBtn.disabled = true;
-	    saveThemeBtn.textContent = "Saving...";
+		saveThemeBtn.disabled = true;
+		saveThemeBtn.textContent = "Saving...";
 	
-	    await setDoc(doc(db, "users", currentUser.uid), { submittedTheme: text }, { merge: true });
+		await setDoc(doc(db, "users", currentUser.uid), { submittedTheme: text }, { merge: true });
 	
-	    // Display inline confirmation message
-	    submissionFeedbackMsg.textContent = "✓ Theme saved successfully!";
-	    submissionFeedbackMsg.classList.remove('hidden');
-	
-	    // Reset button state
-	    saveThemeBtn.disabled = false;
-	    saveThemeBtn.textContent = "Save Theme";
-	
-	    // Auto-hide success message after 3 seconds
-	    setTimeout(() => {
-	      submissionFeedbackMsg.classList.add('hidden');
-	    }, 3000);
-	
+		saveThemeBtn.disabled = false;
+		saveThemeBtn.textContent = "Save Theme";
 	  } catch (err) {
-	    submissionFeedbackMsg.textContent = "❌ Error saving theme. Try again.";
-	    submissionFeedbackMsg.style.color = "var(--danger)";
-	    submissionFeedbackMsg.classList.remove('hidden');
-	    saveThemeBtn.disabled = false;
-	    saveThemeBtn.textContent = "Save Theme";
+		alert("Error saving theme. Please try again.");
+		saveThemeBtn.disabled = false;
+		saveThemeBtn.textContent = "Save Theme";
 	  }
 	});
 
   randomizeThemesBtn.addEventListener('click', async () => {
-    const usersSnap = await getDocs(collection(db, "users"));
-    const participants = [];
-    usersSnap.forEach((doc) => {
-      const data = doc.data();
-      if (data.regEvent1 && data.submittedTheme) {
-        participants.push({ id: doc.id, theme: data.submittedTheme });
-      }
-    });
-
-    if (participants.length < 2) {
-      alert("Need at least 2 registered participants with submitted themes.");
-      return;
-    }
-
-    const originalThemes = participants.map(p => p.theme);
-    let shuffled = [...originalThemes];
-    let isValid = false;
-
-    while (!isValid && originalThemes.length > 1) {
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      isValid = shuffled.every((item, idx) => item !== originalThemes[idx]);
-    }
-
-    const updates = participants.map((p, i) => updateDoc(doc(db, "users", p.id), { assignedTheme: shuffled[i] }));
-    updates.push(setDoc(doc(db, "global", "state"), { isLocked: true }, { merge: true }));
-    await Promise.all(updates);
-    alert("Secret Santa themes assigned!");
-  });
-
+	  const usersSnap = await getDocs(collection(db, "users"));
+	  const participants = [];
+	
+	  // ONLY include users who registered AND have a non-empty submittedTheme
+	  usersSnap.forEach((docSnap) => {
+	    const data = docSnap.data();
+	    if (data.regEvent1 && data.submittedTheme && data.submittedTheme.trim() !== "") {
+	      participants.push({ id: docSnap.id, theme: data.submittedTheme.trim() });
+	    }
+	  });
+	
+	  if (participants.length < 2) {
+	    alert("Need at least 2 participants who have SUBMITTED a theme to randomize.");
+	    return;
+	  }
+	
+	  const originalThemes = participants.map(p => p.theme);
+	  let shuffled = [...originalThemes];
+	  let isValid = false;
+	
+	  // Derangement algorithm to guarantee no one gets their own submission
+	  while (!isValid && originalThemes.length > 1) {
+	    for (let i = shuffled.length - 1; i > 0; i--) {
+	      const j = Math.floor(Math.random() * (i + 1));
+	      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+	    }
+	    isValid = shuffled.every((item, idx) => item !== originalThemes[idx]);
+	  }
+	
+	  // Update only the participants who submitted a theme
+	  const updates = participants.map((p, i) => updateDoc(doc(db, "users", p.id), { assignedTheme: shuffled[i] }));
+	  
+	  // Lock the global state for the event
+	  updates.push(setDoc(doc(db, "global", "state"), { isLocked: true }, { merge: true }));
+	
+	  await Promise.all(updates);
+	  alert(`Secret Santa themes assigned to ${participants.length} participants!`);
+	});
   // ================= TAB 2: COMMANDER HUNT LOGIC =================
   saveCommandersBtn.addEventListener('click', async () => {
     const rawList = adminCommanderPool.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
