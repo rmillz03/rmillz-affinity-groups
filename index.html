@@ -153,9 +153,9 @@
     <input type="password" id="auth-password" placeholder="Password" />
     <button id="auth-submit-btn">Login</button>
     <p style="text-align: center; font-size: 0.875rem; color: var(--subtext);">
-      <span id="auth-toggle-text">Need an account?</span> 
-      <a href="#" id="auth-toggle-btn" style="color: var(--accent);">Register</a>
-    </p>
+	  <span id="auth-toggle-text">Need an account?</span> 
+	  <a href="#" id="auth-toggle-btn" style="color: var(--accent); cursor: pointer; text-decoration: underline;">Register</a>
+	</p>
     <div id="auth-error" class="error"></div>
   </div>
 
@@ -354,14 +354,25 @@
     tabContent1.classList.add('hidden');
   });
 
-  // AUTH LOGIC
-  authToggleBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    isRegistering = !isRegistering;
-    authTitle.textContent = isRegistering ? "Register" : "Login";
-    authSubmitBtn.textContent = isRegistering ? "Register" : "Login";
-    document.getElementById('auth-toggle-text').textContent = isRegistering ? "Already have an account?" : "Need an account?";
-  });
+  // AUTH TOGGLE LOGIC (Switch between Login and Register)
+	authToggleBtn.addEventListener('click', (e) => {
+	  e.preventDefault();
+	  isRegistering = !isRegistering;
+	  
+	  if (isRegistering) {
+	    authTitle.textContent = "Register";
+	    authSubmitBtn.textContent = "Register";
+	    document.getElementById('auth-toggle-text').textContent = "Already have an account?";
+	    authToggleBtn.textContent = "Back to Login";
+	  } else {
+	    authTitle.textContent = "Login";
+	    authSubmitBtn.textContent = "Login";
+	    document.getElementById('auth-toggle-text').textContent = "Need an account?";
+	    authToggleBtn.textContent = "Register";
+	  }
+	  
+	  authError.textContent = ""; // Clear any residual error messages
+	});
 
   authSubmitBtn.addEventListener('click', async () => {
     authError.textContent = "";
