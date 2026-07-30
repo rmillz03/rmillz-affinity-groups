@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Hub & Generator</title>
+  <style>
+    :root {
+      --bg: #121214;
+      --card: #1e1e24;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --text: #f3f4f6;
+      --subtext: #9ca3af;
+      --success: #10b981;
+      --danger: #ef4444;
+      --border: #374151;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      box-sizing: border-box;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      margin-bottom: 1.5rem;
+    }
+
+    h2, h3, h4 { margin-top: 0; }
+    input, textarea, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #111827;
+      color: var(--text);
+      box-sizing: border-box;
+    }
+
+    button {
+      background: var(--accent);
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: opacity 0.2s;
+    }
+
+    button:hover:not(:disabled) { opacity: 0.9; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-secondary { background: #374151; }
+    .btn-success { background: var(--success); }
+    .btn-danger { background: var(--danger); }
+
+    .hidden { display: none !important; }
+    .error { color: var(--danger); font-size: 0.875rem; margin-top: 0.5rem; }
+    
+    .status-badge {
+      font-size: 0.8rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--border);
+      display: inline-block;
+    }
+
+    /* TABS */
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.75rem;
+      background: #1e1e24;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      color: var(--subtext);
+      font-weight: bold;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    /* REGISTER BANNER */
+    .register-banner {
+      text-align: center;
+      padding: 2rem 1rem;
+      background: #18181b;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+    }
+
+    /* COMMANDER ROWS */
+    .commander-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      background: #111827;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .commander-name {
+      flex: 1;
+      font-weight: 600;
+      color: #a7f3d0;
+    }
+
+    .commander-row button {
+      width: auto;
+      margin: 0;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- AUTH SECTION -->
+  <div id="auth-section" class="card">
+    <h2 id="auth-title">Login</h2>
+    <input type="email" id="auth-email" placeholder="Email" />
+    <input type="password" id="auth-password" placeholder="Password" />
+    <button id="auth-submit-btn">Login</button>
+    <p style="text-align: center; font-size: 0.875rem; color: var(--subtext);">
+      <span id="auth-toggle-text">Need an account?</span> 
+      <a href="#" id="auth-toggle-btn" style="color: var(--accent);">Register</a>
+    </p>
+    <div id="auth-error" class="error"></div>
+  </div>
+
+  <!-- MAIN APP DASHBOARD -->
+  <div id="app-section" class="hidden">
+    
+    <!-- USER HEADER -->
+    <div class="card" style="margin-bottom: 1rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="status-badge" id="user-display">User</span>
+        <button id="logout-btn" class="btn-secondary" style="width:auto; margin:0; padding:0.25rem 0.75rem;">Logout</button>
+      </div>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" id="tab-btn-1">Secret Santa</button>
+      <button class="tab-btn" id="tab-btn-2">Commander Hunt</button>
+    </div>
+
+    <!-- ================= TAB 1: GAME DESIGN SECRET SANTA ================= -->
+    <div id="tab-content-1" class="tab-content">
+      
+      <!-- Registration Prompt -->
+      <div id="tab1-unregistered" class="register-banner">
+        <h3>Game Design Secret Santa Event</h3>
+        <p style="color: var(--subtext);">Submit a theme and receive a randomized theme submitted by another player.</p>
+        <button id="reg-event1-btn" class="btn-success">Register For Event</button>
+      </div>
+
+      <!-- Main Event Area -->
+      <div id="tab1-registered" class="hidden">
+        
+        <!-- Submission Panel -->
+        <div class="card">
+          <h3>1. Submit Your Game Theme</h3>
+          <div id="submission-form">
+            <input type="text" id="theme-input" placeholder="e.g. Ancient Technology & Magic" />
+            <button id="save-theme-btn">Save Theme</button>
+          </div>
+          <p id="submission-locked-msg" class="hidden" style="color: var(--subtext);">
+            🔒 Submissions are locked for this round.
+          </p>
+        </div>
+
+        <!-- Admin Control (Tab 1) -->
+        <div id="admin-panel-1" class="card hidden" style="border: 1px solid var(--accent);">
+          <h3>Admin Controls</h3>
+          <p id="tab1-participant-count" style="font-size: 0.85rem; color: var(--subtext);">Registered Participants: 0</p>
+          <button id="randomize-themes-btn">🎲 Start Randomization & Assign Themes</button>
+        </div>
+
+        <!-- Assigned Theme Display -->
+        <div class="card" style="text-align: center;">
+          <h3>2. Your Assigned Theme</h3>
+          <div id="theme-display" style="font-size: 1.25rem; font-weight: bold; margin-top: 1rem; color: #a7f3d0;">
+            Waiting on admin...
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= TAB 2: GREAT COMMANDER HUNT ================= -->
+    <div id="tab-content-2" class="tab-content hidden">
+      
+      <!-- Registration Prompt -->
+      <div id="tab2-unregistered" class="register-banner">
+        <h3>Great Commander Hunt Event</h3>
+        <p style="color: var(--subtext);">Draft and redraw your pool of 5 MTG Commanders from a shared global list.</p>
+        <button id="reg-event2-btn" class="btn-success">Register For Event</button>
+      </div>
+
+      <!-- Main Event Area -->
+      <div id="tab2-registered" class="hidden">
+        
+        <!-- Admin Control (Tab 2) -->
+        <div id="admin-panel-2" class="card hidden" style="border: 1px solid var(--accent);">
+          <h3>Admin Controls</h3>
+          <p id="tab2-participant-count" style="font-size: 0.85rem; color: var(--subtext);">Registered Participants: 0</p>
+          <label style="font-size: 0.85rem; color: var(--subtext);">Commander List (One per line):</label>
+          <textarea id="admin-commander-pool" rows="4" placeholder="Atatrax, Praetors' Voice&#10;Edgar Markov&#10;Krenko, Mob Boss..."></textarea>
+          <button id="save-commanders-btn" class="btn-secondary">Save Pool</button>
+          <button id="assign-commanders-btn">⚔️ Start Commander Assignment</button>
+        </div>
+
+        <!-- Commander Drafting Area -->
+        <div class="card">
+          <h3>Your Assigned Commanders (5 Slots)</h3>
+          <p style="color: var(--subtext); font-size: 0.85rem;">You may redraw each slot up to 3 times. Keep at least 1 commander to enable submission.</p>
+
+          <div id="commanders-container">
+            <p style="color: var(--subtext); text-align: center;">Waiting on admin to start assignment...</p>
+          </div>
+
+          <button id="submit-commanders-btn" class="btn-success" disabled style="margin-top: 1.5rem;">Submit Final Deck Choice</button>
+          <p id="commanders-locked-msg" class="hidden error" style="text-align:center;">Final deck selection locked and submitted!</p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- FIREBASE SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
+    signOut, onAuthStateChanged 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { 
+    getFirestore, doc, setDoc, getDoc, getDocs, collection, onSnapshot, updateDoc, arrayUnion, arrayRemove 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // 1. YOUR FIREBASE CONFIGURATION
+  const firebaseConfig = {
+		  apiKey: "AIzaSyAsDgeUXFF_JUCpz3jIOP4uGat53GN7HXo",
+		  authDomain: "affinity-groups-e61b5.firebaseapp.com",
+		  projectId: "affinity-groups-e61b5",
+		  storageBucket: "affinity-groups-e61b5.firebasestorage.app",
+		  messagingSenderId: "246685754099",
+		  appId: "1:246685754099:web:ae8577d9eb5616602acd86"
+  };
+
+  // Set your admin email address here
+  const ADMIN_EMAIL = "rmillz03@gmail.com";
+
+  // Initialize
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let currentUser = null;
+  let isRegistering = false;
+  let userDocData = null;
+
+  // DOM Elements
+  const authSection = document.getElementById('auth-section');
+  const appSection = document.getElementById('app-section');
+  const authTitle = document.getElementById('auth-title');
+  const authEmail = document.getElementById('auth-email');
+  const authPassword = document.getElementById('auth-password');
+  const authSubmitBtn = document.getElementById('auth-submit-btn');
+  const authToggleBtn = document.getElementById('auth-toggle-btn');
+  const authError = document.getElementById('auth-error');
+  const userDisplay = document.getElementById('user-display');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  // Tabs
+  const tabBtn1 = document.getElementById('tab-btn-1');
+  const tabBtn2 = document.getElementById('tab-btn-2');
+  const tabContent1 = document.getElementById('tab-content-1');
+  const tabContent2 = document.getElementById('tab-content-2');
+
+  // Tab 1 Elements
+  const regEvent1Btn = document.getElementById('reg-event1-btn');
+  const tab1Unregistered = document.getElementById('tab1-unregistered');
+  const tab1Registered = document.getElementById('tab1-registered');
+  const themeInput = document.getElementById('theme-input');
+  const saveThemeBtn = document.getElementById('save-theme-btn');
+  const submissionForm = document.getElementById('submission-form');
+  const submissionLockedMsg = document.getElementById('submission-locked-msg');
+  const adminPanel1 = document.getElementById('admin-panel-1');
+  const randomizeThemesBtn = document.getElementById('randomize-themes-btn');
+  const themeDisplay = document.getElementById('theme-display');
+
+  // Tab 2 Elements
+  const regEvent2Btn = document.getElementById('reg-event2-btn');
+  const tab2Unregistered = document.getElementById('tab2-unregistered');
+  const tab2Registered = document.getElementById('tab2-registered');
+  const adminPanel2 = document.getElementById('admin-panel-2');
+  const adminCommanderPool = document.getElementById('admin-commander-pool');
+  const saveCommandersBtn = document.getElementById('save-commanders-btn');
+  const assignCommandersBtn = document.getElementById('assign-commanders-btn');
+  const commandersContainer = document.getElementById('commanders-container');
+  const submitCommandersBtn = document.getElementById('submit-commanders-btn');
+  const commandersLockedMsg = document.getElementById('commanders-locked-msg');
+
+  // TAB SWITCHING
+  tabBtn1.addEventListener('click', () => {
+    tabBtn1.classList.add('active');
+    tabBtn2.classList.remove('active');
+    tabContent1.classList.remove('hidden');
+    tabContent2.classList.add('hidden');
+  });
+
+  tabBtn2.addEventListener('click', () => {
+    tabBtn2.classList.add('active');
+    tabBtn1.classList.remove('active');
+    tabContent2.classList.remove('hidden');
+    tabContent1.classList.add('hidden');
+  });
+
+  // AUTH LOGIC
+  authToggleBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    isRegistering = !isRegistering;
+    authTitle.textContent = isRegistering ? "Register" : "Login";
+    authSubmitBtn.textContent = isRegistering ? "Register" : "Login";
+    document.getElementById('auth-toggle-text').textContent = isRegistering ? "Already have an account?" : "Need an account?";
+  });
+
+  authSubmitBtn.addEventListener('click', async () => {
+    authError.textContent = "";
+    try {
+      if (isRegistering) {
+        await createUserWithEmailAndPassword(auth, authEmail.value, authPassword.value);
+      } else {
+        await signInWithEmailAndPassword(auth, authEmail.value, authPassword.value);
+      }
+    } catch (err) {
+      authError.textContent = err.message;
+    }
+  });
+
+  logoutBtn.addEventListener('click', () => signOut(auth));
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      authSection.classList.add('hidden');
+      appSection.classList.remove('hidden');
+      userDisplay.textContent = user.email;
+
+      if (user.email === ADMIN_EMAIL) {
+        adminPanel1.classList.remove('hidden');
+        adminPanel2.classList.remove('hidden');
+      }
+
+      setupRealtimeListeners();
+    } else {
+      currentUser = null;
+      authSection.classList.remove('hidden');
+      appSection.classList.add('hidden');
+    }
+  });
+
+  // EVENT REGISTRATIONS
+  regEvent1Btn.addEventListener('click', async () => {
+    await setDoc(doc(db, "users", currentUser.uid), { regEvent1: true }, { merge: true });
+  });
+
+  regEvent2Btn.addEventListener('click', async () => {
+    await setDoc(doc(db, "users", currentUser.uid), { regEvent2: true }, { merge: true });
+  });
+
+  // REALTIME LISTENERS
+  function setupRealtimeListeners() {
+    // 1. Listen for global state
+    onSnapshot(doc(db, "global", "state"), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // Tab 1 Lock Status
+        if (data.isLocked) {
+          submissionForm.classList.add('hidden');
+          submissionLockedMsg.classList.remove('hidden');
+        } else {
+          submissionForm.classList.remove('hidden');
+          submissionLockedMsg.classList.add('hidden');
+        }
+
+        // Tab 2 Pool Input Sync for Admin
+        if (data.commanderPool && currentUser.email === ADMIN_EMAIL && !adminCommanderPool.value) {
+          adminCommanderPool.value = data.commanderPool.join('\n');
+        }
+      }
+    });
+
+    // 2. Listen for All Users (Admin metrics & live counts)
+    onSnapshot(collection(db, "users"), (snapshot) => {
+      let count1 = 0;
+      let count2 = 0;
+      snapshot.forEach((d) => {
+        const u = d.data();
+        if (u.regEvent1) count1++;
+        if (u.regEvent2) count2++;
+      });
+      document.getElementById('tab1-participant-count').textContent = `Registered Participants: ${count1}`;
+      document.getElementById('tab2-participant-count').textContent = `Registered Participants: ${count2}`;
+    });
+
+    // 3. Listen for User Profile
+    onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
+      if (docSnap.exists()) {
+        userDocData = docSnap.data();
+        
+        // Tab 1 Reg View
+        if (userDocData.regEvent1) {
+          tab1Unregistered.classList.add('hidden');
+          tab1Registered.classList.remove('hidden');
+        } else {
+          tab1Unregistered.classList.remove('hidden');
+          tab1Registered.classList.add('hidden');
+        }
+
+        // Tab 2 Reg View
+        if (userDocData.regEvent2) {
+          tab2Unregistered.classList.add('hidden');
+          tab2Registered.classList.remove('hidden');
+        } else {
+          tab2Unregistered.classList.remove('hidden');
+          tab2Registered.classList.add('hidden');
+        }
+
+        // Tab 1 Display Data
+        if (userDocData.submittedTheme && !themeInput.value) {
+          themeInput.value = userDocData.submittedTheme;
+        }
+        themeDisplay.textContent = userDocData.assignedTheme ? `🎯 ${userDocData.assignedTheme}` : "Waiting on admin...";
+
+        // Tab 2 Render Commanders
+        renderCommanderSlots(userDocData);
+      }
+    });
+  }
+
+  // ================= TAB 1: SECRET SANTA LOGIC =================
+  saveThemeBtn.addEventListener('click', async () => {
+    const text = themeInput.value.trim();
+    if (!text) return;
+    await setDoc(doc(db, "users", currentUser.uid), { submittedTheme: text }, { merge: true });
+    alert("Theme saved!");
+  });
+
+  randomizeThemesBtn.addEventListener('click', async () => {
+    const usersSnap = await getDocs(collection(db, "users"));
+    const participants = [];
+    usersSnap.forEach((doc) => {
+      const data = doc.data();
+      if (data.regEvent1 && data.submittedTheme) {
+        participants.push({ id: doc.id, theme: data.submittedTheme });
+      }
+    });
+
+    if (participants.length < 2) {
+      alert("Need at least 2 registered participants with submitted themes.");
+      return;
+    }
+
+    const originalThemes = participants.map(p => p.theme);
+    let shuffled = [...originalThemes];
+    let isValid = false;
+
+    while (!isValid && originalThemes.length > 1) {
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      isValid = shuffled.every((item, idx) => item !== originalThemes[idx]);
+    }
+
+    const updates = participants.map((p, i) => updateDoc(doc(db, "users", p.id), { assignedTheme: shuffled[i] }));
+    updates.push(setDoc(doc(db, "global", "state"), { isLocked: true }, { merge: true }));
+    await Promise.all(updates);
+    alert("Secret Santa themes assigned!");
+  });
+
+  // ================= TAB 2: COMMANDER HUNT LOGIC =================
+  saveCommandersBtn.addEventListener('click', async () => {
+    const rawList = adminCommanderPool.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+    await setDoc(doc(db, "global", "state"), { commanderPool: rawList }, { merge: true });
+    alert("Commander pool saved!");
+  });
+
+  assignCommandersBtn.addEventListener('click', async () => {
+    const globalSnap = await getDoc(doc(db, "global", "state"));
+    let pool = (globalSnap.exists() && globalSnap.data().commanderPool) ? [...globalSnap.data().commanderPool] : [];
+    
+    const usersSnap = await getDocs(collection(db, "users"));
+    const registeredUsers = [];
+    usersSnap.forEach((doc) => {
+      if (doc.data().regEvent2) registeredUsers.push(doc.id);
+    });
+
+    if (pool.length < registeredUsers.length * 5) {
+      alert(`Not enough commanders in pool! Need at least ${registeredUsers.length * 5} commanders for ${registeredUsers.length} players.`);
+      return;
+    }
+
+    const updates = [];
+    for (const userId of registeredUsers) {
+      const assigned = [];
+      for (let i = 0; i < 5; i++) {
+        const randomIndex = Math.floor(Math.random() * pool.length);
+        const picked = pool.splice(randomIndex, 1)[0];
+        assigned.push({ name: picked, redrawsLeft: 3, kept: false });
+      }
+      updates.push(updateDoc(doc(db, "users", userId), { 
+        commanders: assigned, 
+        commanderSubmitted: false 
+      }));
+    }
+
+    // Save remaining available pool back to global state
+    updates.push(updateDoc(doc(db, "global", "state"), { commanderPool: pool }));
+    await Promise.all(updates);
+    alert("Initial 5 Commanders assigned to all registered players!");
+  });
+
+  // Render Commander UI
+  function renderCommanderSlots(userData) {
+    if (!userData.commanders || userData.commanders.length === 0) {
+      commandersContainer.innerHTML = `<p style="color: var(--subtext); text-align: center;">Waiting on admin to start assignment...</p>`;
+      submitCommandersBtn.disabled = true;
+      return;
+    }
+
+    const isSubmitted = userData.commanderSubmitted || false;
+    commandersContainer.innerHTML = '';
+
+    let hasAnyKept = false;
+
+    userData.commanders.forEach((c, idx) => {
+      if (c.kept) hasAnyKept = true;
+
+      const row = document.createElement('div');
+      row.className = 'commander-row';
+
+      row.innerHTML = `
+        <div class="commander-name">${c.name}</div>
+        <button class="btn-secondary redraw-btn" ${ (c.kept || c.redrawsLeft === 0 || isSubmitted) ? 'disabled' : '' }>
+          Redraw (${c.redrawsLeft})
+        </button>
+        <button class="btn-success keep-btn" ${ (c.kept || isSubmitted) ? 'disabled' : '' }>
+          ${ c.kept ? 'Kept' : 'Keep' }
+        </button>
+      `;
+
+      // Redraw Handler
+      row.querySelector('.redraw-btn').addEventListener('click', () => handleRedraw(idx));
+      // Keep Handler
+      row.querySelector('.keep-btn').addEventListener('click', () => handleKeep(idx));
+
+      commandersContainer.appendChild(row);
+    });
+
+    submitCommandersBtn.disabled = !hasAnyKept || isSubmitted;
+    if (isSubmitted) {
+      commandersLockedMsg.classList.remove('hidden');
+    } else {
+      commandersLockedMsg.classList.add('hidden');
+    }
+  }
+
+  // Handle Individual Slot Redraw
+  async function handleRedraw(slotIndex) {
+    const globalSnap = await getDoc(doc(db, "global", "state"));
+    let pool = (globalSnap.exists() && globalSnap.data().commanderPool) ? [...globalSnap.data().commanderPool] : [];
+
+    if (pool.length === 0) {
+      alert("No available commanders left in the global pool!");
+      return;
+    }
+
+    // Draw new commander
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    const newCommander = pool.splice(randomIndex, 1)[0];
+
+    const currentCommanders = [...userDocData.commanders];
+    const oldCommanderName = currentCommanders[slotIndex].name;
+    const remainingRedraws = currentCommanders[slotIndex].redrawsLeft - 1;
+
+    // Put old commander back into the global pool
+    pool.push(oldCommanderName);
+
+    // Update current slot
+    currentCommanders[slotIndex] = {
+      name: newCommander,
+      redrawsLeft: remainingRedraws,
+      kept: false
+    };
+
+    // Commit both player state and global state
+    await Promise.all([
+      updateDoc(doc(db, "users", currentUser.uid), { commanders: currentCommanders }),
+      updateDoc(doc(db, "global", "state"), { commanderPool: pool })
+    ]);
+  }
+
+  // Handle Slot Keep Toggle
+  async function handleKeep(slotIndex) {
+    const currentCommanders = [...userDocData.commanders];
+    currentCommanders[slotIndex].kept = true;
+    await updateDoc(doc(db, "users", currentUser.uid), { commanders: currentCommanders });
+  }
+
+  // Handle Final Submission
+  submitCommandersBtn.addEventListener('click', async () => {
+    const currentCommanders = [...userDocData.commanders];
+    const keptCommanders = currentCommanders.filter(c => c.kept);
+    const unkeptCommanders = currentCommanders.filter(c => !c.kept).map(c => c.name);
+
+    // Return unkept commanders back to the global pool
+    if (unkeptCommanders.length > 0) {
+      await updateDoc(doc(db, "global", "state"), {
+        commanderPool: arrayUnion(...unkeptCommanders)
+      });
+    }
+
+    // Lock user submission and preserve only kept commanders
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      commanders: keptCommanders,
+      commanderSubmitted: true
+    });
+
+    alert("Final deck selection locked and submitted!");
+  });
+
+</script>
+</body>
+</html>
