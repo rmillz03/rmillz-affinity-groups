@@ -206,9 +206,12 @@
 
         <!-- Admin Control (Tab 1) -->
         <div id="admin-panel-1" class="card hidden" style="border: 1px solid var(--accent);">
-          <h3>Admin Controls</h3>
-          <p id="tab1-participant-count" style="font-size: 0.85rem; color: var(--subtext);">Registered Participants: 0</p>
-          <button id="randomize-themes-btn">🎲 Start Randomization & Assign Themes</button>
+          	<h3>Admin Controls</h3>
+          	<p id="tab1-participant-count" style="font-size: 0.85rem; color: var(--subtext);">Registered Participants: 0</p>
+          	<button id="randomize-themes-btn">🎲 Start Randomization & Assign Themes</button>
+			<button id="reset-event1-btn" class="btn-danger" style="margin-top: 0.5rem;">
+			  🔄 Reset Secret Santa Event
+			</button>
         </div>
 
         <!-- Assigned Theme Display -->
@@ -244,6 +247,7 @@
           <textarea id="admin-commander-pool" rows="4" placeholder="Atatrax, Praetors' Voice&#10;Edgar Markov&#10;Krenko, Mob Boss..."></textarea>
           <button id="save-commanders-btn" class="btn-secondary">Save Pool</button>
           <button id="assign-commanders-btn">⚔️ Start Commander Assignment</button>
+		  <button id="reset-event2-btn" class="btn-danger" style="margin-top: 0.5rem;">🔄 Reset Commander Hunt Event</button>
         </div>
 
         <!-- Commander Drafting Area -->
@@ -682,6 +686,46 @@
 
     alert("Final deck selection locked and submitted!");
   });
+
+	// ================= EVENT RESET =================
+	// RESET EVENT 1 (Secret Santa)
+	document.getElementById('reset-event1-btn').addEventListener('click', async () => {
+	  if (!confirm("Are you sure you want to reset the Secret Santa event? This will unlock submissions and clear all assigned themes.")) return;
+	
+	  // 1. Unlock global state
+	  await setDoc(doc(db, "global", "state"), { isLocked: false }, { merge: true });
+	
+	  // 2. Clear assigned themes for all users
+	  const usersSnap = await getDocs(collection(db, "users"));
+	  const updates = [];
+	  usersSnap.forEach((userDoc) => {
+	    updates.push(updateDoc(doc(db, "users", userDoc.id), {
+	      assignedTheme: null,
+	      submittedTheme: null // Optional: remove this line if you want users to keep their prompt text
+	    }));
+	  });
+	
+	  await Promise.all(updates);
+	  alert("Secret Santa event reset successfully!");
+	});
+	
+	// RESET EVENT 2 (Commander Hunt)
+	document.getElementById('reset-event2-btn').addEventListener('click', async () => {
+	  if (!confirm("Are you sure you want to reset the Commander Hunt event? This will clear all assigned decks.")) return;
+	
+	  // Clear commander state for all users
+	  const usersSnap = await getDocs(collection(db, "users"));
+	  const updates = [];
+	  usersSnap.forEach((userDoc) => {
+	    updates.push(updateDoc(doc(db, "users", userDoc.id), {
+	      commanders: null,
+	      commanderSubmitted: false
+	    }));
+	  });
+	
+	  await Promise.all(updates);
+	  alert("Commander Hunt event reset successfully! Remember to update/re-save your master commander pool.");
+	});
 
 </script>
 </body>
