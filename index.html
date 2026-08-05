@@ -153,9 +153,9 @@
     <input type="password" id="auth-password" placeholder="Password" />
     <button id="auth-submit-btn">Login</button>
     <p style="text-align: center; font-size: 0.875rem; color: var(--subtext);">
-	  <span id="auth-toggle-text">Need an account?</span> 
-	  <a href="#" id="auth-toggle-btn" style="color: var(--accent); cursor: pointer; text-decoration: underline;">Register</a>
-	</p>
+      <span id="auth-toggle-text">Need an account?</span> 
+      <a href="#" id="auth-toggle-btn" style="color: var(--accent); cursor: pointer; text-decoration: underline;">Register</a>
+    </p>
     <div id="auth-error" class="error"></div>
   </div>
 
@@ -190,56 +190,41 @@
       <div id="tab1-registered" class="hidden">
         
         <!-- Submission Panel -->
-		<div class="card">
-		  <h3>1. Submit Your Game Theme</h3>
-		  <p style="color: var(--subtext); font-size: 0.875rem; margin-top: -0.25rem; margin-bottom: 0.75rem;">
-		    💡 <em>Note: You can update or change your theme submission anytime before the admin starts randomization!</em>
-		  </p>
-		  <div id="submission-form">
-		    <input type="text" id="theme-input" placeholder="e.g. Ancient Technology & Magic" />
-		    <button id="save-theme-btn">Save Theme</button>
-		    <!-- Constant indicator for the last saved theme -->
-		    <p id="last-saved-theme-display" style="font-size: 0.875rem; color: #a7f3d0; margin-top: 0.75rem;">
-		      <strong>Last Saved Theme:</strong> <span id="last-saved-value"></span>
-		    </p>
-		  </div>
-		  <p id="submission-locked-msg" class="hidden" style="color: var(--subtext);">
-		    🔒 Submissions are locked for this round.
-		  </p>
-		</div>
+        <div class="card">
+          <h3>1. Submit Your Game Theme</h3>
+          <p style="color: var(--subtext); font-size: 0.875rem; margin-top: -0.25rem; margin-bottom: 0.75rem;">
+            💡 <em>Note: You can update or change your theme submission anytime before the admin starts randomization!</em>
+          </p>
+          <div id="submission-form">
+            <input type="text" id="theme-input" placeholder="e.g. Ancient Technology & Magic" />
+            <button id="save-theme-btn">Save Theme</button>
+            <!-- Constant indicator for the last saved theme -->
+            <p id="last-saved-theme-display" style="font-size: 0.875rem; color: #a7f3d0; margin-top: 0.75rem;">
+              <strong>Last Saved Theme:</strong> <span id="last-saved-value">""</span>
+            </p>
+          </div>
+          <p id="submission-locked-msg" class="hidden" style="color: var(--subtext);">
+            🔒 Submissions are locked for this round.
+          </p>
+        </div>
 
         <!-- Admin Control (Tab 1) -->
         <div id="admin-panel-1" class="card hidden" style="border: 1px solid var(--accent);">
-          	<h3>Admin Controls</h3>
-          	<p id="tab1-participant-count" style="font-size: 0.85rem; color: var(--subtext);">Registered Participants: 0</p>
-          	<button id="randomize-themes-btn">🎲 Start Randomization & Assign Themes</button>
-			<button id="reset-event1-btn" class="btn-danger" style="margin-top: 0.5rem;">
-			  🔄 Reset Secret Santa Event
-			</button>
+          <h3>Admin Controls</h3>
+          <p id="tab1-participant-count" style="font-size: 0.85rem; color: var(--subtext);">Registered Participants: 0</p>
+          <button id="randomize-themes-btn">🎲 Start Randomization & Assign Themes</button>
+          <button id="reset-event1-btn" class="btn-danger" style="margin-top: 0.5rem;">
+            🔄 Reset Secret Santa Event
+          </button>
         </div>
 
         <!-- Assigned Theme Display -->
-        <!-- Commander Drafting Area -->
-		<div class="card">
-		  <h3>Your Assigned Commanders (5 Slots)</h3>
-		  
-		  <!-- Detailed Instructions Box -->
-		  <div style="background: #111827; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--subtext); line-height: 1.4;">
-		    <strong style="color: var(--text);">📖 How to Play:</strong>
-		    <ul style="margin: 0.5rem 0 0 1.2rem; padding: 0;">
-		      <li><strong>Redraw (up to 3x per slot):</strong> Re-rolls that slot for a new available commander from the global pool.</li>
-		      <li><strong>Keep:</strong> Locks in that specific commander and disables its Redraw button.</li>
-		      <li><strong>Submit Final Deck Choice:</strong> Requires at least 1 kept commander. <span style="color: #fcd34d;">⚠️ Submitting is FINAL. Any commanders NOT kept will be immediately returned to the shared pool for other players to draw!</span></li>
-		    </ul>
-		  </div>
-		
-		  <div id="commanders-container">
-		    <p style="color: var(--subtext); text-align: center;">Waiting on admin to start assignment...</p>
-		  </div>
-		
-		  <button id="submit-commanders-btn" class="btn-success" disabled style="margin-top: 1.5rem;">Submit Final Deck Choice</button>
-		  <p id="commanders-locked-msg" class="hidden error" style="text-align:center;">🔒 Final deck selection locked and submitted!</p>
-		</div>
+        <div class="card">
+          <h3>Your Assigned Theme</h3>
+          <div id="theme-display" style="font-size: 1.25rem; font-weight: bold; color: #a7f3d0; text-align: center; padding: 1rem 0;">
+            Waiting on admin...
+          </div>
+        </div>
 
       </div>
 
@@ -263,23 +248,32 @@
           <h3>Admin Controls</h3>
           <p id="tab2-participant-count" style="font-size: 0.85rem; color: var(--subtext);">Registered Participants: 0</p>
           <label style="font-size: 0.85rem; color: var(--subtext);">Commander List (One per line):</label>
-          <textarea id="admin-commander-pool" rows="4" placeholder="Atatrax, Praetors' Voice&#10;Edgar Markov&#10;Krenko, Mob Boss..."></textarea>
+          <textarea id="admin-commander-pool" rows="4" placeholder="Atraxa, Praetors' Voice&#10;Edgar Markov&#10;Krenko, Mob Boss..."></textarea>
           <button id="save-commanders-btn" class="btn-secondary">Save Pool</button>
           <button id="assign-commanders-btn">⚔️ Start Commander Assignment</button>
-		  <button id="reset-event2-btn" class="btn-danger" style="margin-top: 0.5rem;">🔄 Reset Commander Hunt Event</button>
+          <button id="reset-event2-btn" class="btn-danger" style="margin-top: 0.5rem;">🔄 Reset Commander Hunt Event</button>
         </div>
 
         <!-- Commander Drafting Area -->
         <div class="card">
           <h3>Your Assigned Commanders (5 Slots)</h3>
-          <p style="color: var(--subtext); font-size: 0.85rem;">You may redraw each slot up to 3 times. Keep at least 1 commander to enable submission.</p>
+          
+          <!-- Detailed Instructions Box -->
+          <div style="background: #111827; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--subtext); line-height: 1.4;">
+            <strong style="color: var(--text);">📖 How to Play:</strong>
+            <ul style="margin: 0.5rem 0 0 1.2rem; padding: 0;">
+              <li><strong>Redraw (up to 3x per slot):</strong> Re-rolls that slot for a new available commander from the global pool.</li>
+              <li><strong>Keep:</strong> Locks in that specific commander and disables its Redraw button.</li>
+              <li><strong>Submit Final Deck Choice:</strong> Requires at least 1 kept commander. <span style="color: #fcd34d;">⚠️ Submitting is FINAL. Any commanders NOT kept will be immediately returned to the shared pool for other players to draw!</span></li>
+            </ul>
+          </div>
 
           <div id="commanders-container">
             <p style="color: var(--subtext); text-align: center;">Waiting on admin to start assignment...</p>
           </div>
 
           <button id="submit-commanders-btn" class="btn-success" disabled style="margin-top: 1.5rem;">Submit Final Deck Choice</button>
-          <p id="commanders-locked-msg" class="hidden error" style="text-align:center;">Final deck selection locked and submitted!</p>
+          <p id="commanders-locked-msg" class="hidden error" style="text-align:center;">🔒 Final deck selection locked and submitted!</p>
         </div>
 
       </div>
@@ -303,12 +297,12 @@
 
   // 1. YOUR FIREBASE CONFIGURATION
   const firebaseConfig = {
-		  apiKey: "AIzaSyAsDgeUXFF_JUCpz3jIOP4uGat53GN7HXo",
-		  authDomain: "affinity-groups-e61b5.firebaseapp.com",
-		  projectId: "affinity-groups-e61b5",
-		  storageBucket: "affinity-groups-e61b5.firebasestorage.app",
-		  messagingSenderId: "246685754099",
-		  appId: "1:246685754099:web:ae8577d9eb5616602acd86"
+    apiKey: "AIzaSyAsDgeUXFF_JUCpz3jIOP4uGat53GN7HXo",
+    authDomain: "affinity-groups-e61b5.firebaseapp.com",
+    projectId: "affinity-groups-e61b5",
+    storageBucket: "affinity-groups-e61b5.firebasestorage.app",
+    messagingSenderId: "246685754099",
+    appId: "1:246685754099:web:ae8577d9eb5616602acd86"
   };
 
   // Set your admin email address here
@@ -347,6 +341,7 @@
   const tab1Registered = document.getElementById('tab1-registered');
   const themeInput = document.getElementById('theme-input');
   const saveThemeBtn = document.getElementById('save-theme-btn');
+  const lastSavedValue = document.getElementById('last-saved-value');
   const submissionForm = document.getElementById('submission-form');
   const submissionLockedMsg = document.getElementById('submission-locked-msg');
   const adminPanel1 = document.getElementById('admin-panel-1');
@@ -381,24 +376,24 @@
   });
 
   // AUTH TOGGLE LOGIC (Switch between Login and Register)
-	authToggleBtn.addEventListener('click', (e) => {
-	  e.preventDefault();
-	  isRegistering = !isRegistering;
-	  
-	  if (isRegistering) {
-	    authTitle.textContent = "Register";
-	    authSubmitBtn.textContent = "Register";
-	    document.getElementById('auth-toggle-text').textContent = "Already have an account?";
-	    authToggleBtn.textContent = "Back to Login";
-	  } else {
-	    authTitle.textContent = "Login";
-	    authSubmitBtn.textContent = "Login";
-	    document.getElementById('auth-toggle-text').textContent = "Need an account?";
-	    authToggleBtn.textContent = "Register";
-	  }
-	  
-	  authError.textContent = ""; // Clear any residual error messages
-	});
+  authToggleBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    isRegistering = !isRegistering;
+    
+    if (isRegistering) {
+      authTitle.textContent = "Register";
+      authSubmitBtn.textContent = "Register";
+      document.getElementById('auth-toggle-text').textContent = "Already have an account?";
+      authToggleBtn.textContent = "Back to Login";
+    } else {
+      authTitle.textContent = "Login";
+      authSubmitBtn.textContent = "Login";
+      document.getElementById('auth-toggle-text').textContent = "Need an account?";
+      authToggleBtn.textContent = "Register";
+    }
+    
+    authError.textContent = "";
+  });
 
   authSubmitBtn.addEventListener('click', async () => {
     authError.textContent = "";
@@ -484,15 +479,15 @@
       if (docSnap.exists()) {
         userDocData = docSnap.data();
 
-		// Update theme input and constant "Last Saved Theme" indicator
-	    if (userDocData.submittedTheme) {
-	      if (!themeInput.value) {
-	        themeInput.value = userDocData.submittedTheme;
-	      }
-	      lastSavedValue.textContent = userDocData.submittedTheme;
-	    } else {
-	      lastSavedValue.textContent = '""'; // Default empty string state
-	    }
+        // Update theme input and constant "Last Saved Theme" indicator
+        if (userDocData.submittedTheme) {
+          if (!themeInput.value) {
+            themeInput.value = userDocData.submittedTheme;
+          }
+          lastSavedValue.textContent = `"${userDocData.submittedTheme}"`;
+        } else {
+          lastSavedValue.textContent = '""';
+        }
         
         // Tab 1 Reg View
         if (userDocData.regEvent1) {
@@ -513,9 +508,6 @@
         }
 
         // Tab 1 Display Data
-        if (userDocData.submittedTheme && !themeInput.value) {
-          themeInput.value = userDocData.submittedTheme;
-        }
         themeDisplay.textContent = userDocData.assignedTheme ? `🎯 ${userDocData.assignedTheme}` : "Waiting on admin...";
 
         // Tab 2 Render Commanders
@@ -525,69 +517,65 @@
   }
 
   // ================= TAB 1: SECRET SANTA LOGIC =================
-  	// SAVE SUBMISSION WITH IN-PAGE FEEDBACK
-	const submissionFeedbackMsg = document.getElementById('submission-feedback-msg');
-	const lastSavedValue = document.getElementById('last-saved-value');
-	
-	// SAVE SUBMISSION LOGIC
-	saveThemeBtn.addEventListener('click', async () => {
-	  const text = themeInput.value.trim();
-	  if (!text) return;
-	
-	  try {
-		saveThemeBtn.disabled = true;
-		saveThemeBtn.textContent = "Saving...";
-	
-		await setDoc(doc(db, "users", currentUser.uid), { submittedTheme: text }, { merge: true });
-	
-		saveThemeBtn.disabled = false;
-		saveThemeBtn.textContent = "Save Theme";
-	  } catch (err) {
-		alert("Error saving theme. Please try again.");
-		saveThemeBtn.disabled = false;
-		saveThemeBtn.textContent = "Save Theme";
-	  }
-	});
+  saveThemeBtn.addEventListener('click', async () => {
+    const text = themeInput.value.trim();
+    if (!text) return;
+
+    try {
+      saveThemeBtn.disabled = true;
+      saveThemeBtn.textContent = "Saving...";
+
+      await setDoc(doc(db, "users", currentUser.uid), { submittedTheme: text }, { merge: true });
+
+      saveThemeBtn.disabled = false;
+      saveThemeBtn.textContent = "Save Theme";
+    } catch (err) {
+      alert("Error saving theme. Please try again.");
+      saveThemeBtn.disabled = false;
+      saveThemeBtn.textContent = "Save Theme";
+    }
+  });
 
   randomizeThemesBtn.addEventListener('click', async () => {
-	  const usersSnap = await getDocs(collection(db, "users"));
-	  const participants = [];
-	
-	  // ONLY include users who registered AND have a non-empty submittedTheme
-	  usersSnap.forEach((docSnap) => {
-	    const data = docSnap.data();
-	    if (data.regEvent1 && data.submittedTheme && data.submittedTheme.trim() !== "") {
-	      participants.push({ id: docSnap.id, theme: data.submittedTheme.trim() });
-	    }
-	  });
-	
-	  if (participants.length < 2) {
-	    alert("Need at least 2 participants who have SUBMITTED a theme to randomize.");
-	    return;
-	  }
-	
-	  const originalThemes = participants.map(p => p.theme);
-	  let shuffled = [...originalThemes];
-	  let isValid = false;
-	
-	  // Derangement algorithm to guarantee no one gets their own submission
-	  while (!isValid && originalThemes.length > 1) {
-	    for (let i = shuffled.length - 1; i > 0; i--) {
-	      const j = Math.floor(Math.random() * (i + 1));
-	      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-	    }
-	    isValid = shuffled.every((item, idx) => item !== originalThemes[idx]);
-	  }
-	
-	  // Update only the participants who submitted a theme
-	  const updates = participants.map((p, i) => updateDoc(doc(db, "users", p.id), { assignedTheme: shuffled[i] }));
-	  
-	  // Lock the global state for the event
-	  updates.push(setDoc(doc(db, "global", "state"), { isLocked: true }, { merge: true }));
-	
-	  await Promise.all(updates);
-	  alert(`Secret Santa themes assigned to ${participants.length} participants!`);
-	});
+    const usersSnap = await getDocs(collection(db, "users"));
+    const participants = [];
+
+    // ONLY include users who registered AND have a non-empty submittedTheme
+    usersSnap.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data.regEvent1 && data.submittedTheme && data.submittedTheme.trim() !== "") {
+        participants.push({ id: docSnap.id, theme: data.submittedTheme.trim() });
+      }
+    });
+
+    if (participants.length < 2) {
+      alert("Need at least 2 participants who have SUBMITTED a theme to randomize.");
+      return;
+    }
+
+    const originalThemes = participants.map(p => p.theme);
+    let shuffled = [...originalThemes];
+    let isValid = false;
+
+    // Derangement algorithm to guarantee no one gets their own submission
+    while (!isValid && originalThemes.length > 1) {
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      isValid = shuffled.every((item, idx) => item !== originalThemes[idx]);
+    }
+
+    // Update only the participants who submitted a theme
+    const updates = participants.map((p, i) => updateDoc(doc(db, "users", p.id), { assignedTheme: shuffled[i] }));
+    
+    // Lock the global state for the event
+    updates.push(setDoc(doc(db, "global", "state"), { isLocked: true }, { merge: true }));
+
+    await Promise.all(updates);
+    alert(`Secret Santa themes assigned to ${participants.length} participants!`);
+  });
+
   // ================= TAB 2: COMMANDER HUNT LOGIC =================
   saveCommandersBtn.addEventListener('click', async () => {
     const rawList = adminCommanderPool.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
@@ -718,76 +706,76 @@
   }
 
   // Handle Final Submission
-	submitCommandersBtn.addEventListener('click', async () => {
-	  const currentCommanders = [...userDocData.commanders];
-	  const keptCommanders = currentCommanders.filter(c => c.kept);
-	  const unkeptCommanders = currentCommanders.filter(c => !c.kept).map(c => c.name);
-	
-	  // Confirmation dialog
-	  const confirmSubmit = confirm(
-	    `Are you sure you want to submit?\n\n` +
-	    `• You are keeping ${keptCommanders.length} commander(s).\n` +
-	    `• ${unkeptCommanders.length} unkept commander(s) will be returned to the pool.\n\n` +
-	    `This action cannot be undone.`
-	  );
-	
-	  if (!confirmSubmit) return;
-	
-	  // Return unkept commanders back to global pool
-	  if (unkeptCommanders.length > 0) {
-	    await updateDoc(doc(db, "global", "state"), {
-	      commanderPool: arrayUnion(...unkeptCommanders)
-	    });
-	  }
-	
-	  // Lock user submission and preserve only kept commanders
-	  await updateDoc(doc(db, "users", currentUser.uid), {
-	    commanders: keptCommanders,
-	    commanderSubmitted: true
-	  });
-	
-	  alert("Final deck selection locked and submitted!");
-	});
+  submitCommandersBtn.addEventListener('click', async () => {
+    const currentCommanders = [...userDocData.commanders];
+    const keptCommanders = currentCommanders.filter(c => c.kept);
+    const unkeptCommanders = currentCommanders.filter(c => !c.kept).map(c => c.name);
 
-	// ================= EVENT RESET =================
-	// RESET EVENT 1 (Secret Santa)
-	document.getElementById('reset-event1-btn').addEventListener('click', async () => {
-	  if (!confirm("Are you sure you want to reset the Secret Santa event? This will unlock submissions and clear all assigned themes.")) return;
-	
-	  // 1. Unlock global state
-	  await setDoc(doc(db, "global", "state"), { isLocked: false }, { merge: true });
-	
-	  // 2. Clear assigned themes for all users
-	  const usersSnap = await getDocs(collection(db, "users"));
-	  const updates = [];
-	  usersSnap.forEach((userDoc) => {
-	    updates.push(updateDoc(doc(db, "users", userDoc.id), {
-	      assignedTheme: null,
-	      submittedTheme: null // Optional: remove this line if you want users to keep their prompt text
-	    }));
-	  });
-	
-	  await Promise.all(updates);
-	  alert("Secret Santa event reset successfully!");
-	});
-	
-	// RESET EVENT 2 (Commander Hunt)
-	document.getElementById('reset-event2-btn').addEventListener('click', async () => {
-	  if (!confirm("Are you sure you want to reset the Commander Hunt event? This will clear all assigned decks.")) return;
-	
-	  // Clear commander state for all users
-	  const usersSnap = await getDocs(collection(db, "users"));
-	  const updates = [];
-	  usersSnap.forEach((userDoc) => {
-	    updates.push(updateDoc(doc(db, "users", userDoc.id), {
-	      commanders: null,
-	      commanderSubmitted: false
-	    }));
-	  });
-	
-	  await Promise.all(updates);
-	  alert("Commander Hunt event reset successfully! Remember to update/re-save your master commander pool.");
-	});
+    // Confirmation dialog
+    const confirmSubmit = confirm(
+      `Are you sure you want to submit?\n\n` +
+      `• You are keeping ${keptCommanders.length} commander(s).\n` +
+      `• ${unkeptCommanders.length} unkept commander(s) will be returned to the pool.\n\n` +
+      `This action cannot be undone.`
+    );
+
+    if (!confirmSubmit) return;
+
+    // Return unkept commanders back to global pool
+    if (unkeptCommanders.length > 0) {
+      await updateDoc(doc(db, "global", "state"), {
+        commanderPool: arrayUnion(...unkeptCommanders)
+      });
+    }
+
+    // Lock user submission and preserve only kept commanders
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      commanders: keptCommanders,
+      commanderSubmitted: true
+    });
+
+    alert("Final deck selection locked and submitted!");
+  });
+
+  // ================= EVENT RESET =================
+  // RESET EVENT 1 (Secret Santa)
+  document.getElementById('reset-event1-btn').addEventListener('click', async () => {
+    if (!confirm("Are you sure you want to reset the Secret Santa event? This will unlock submissions and clear all assigned themes.")) return;
+
+    // 1. Unlock global state
+    await setDoc(doc(db, "global", "state"), { isLocked: false }, { merge: true });
+
+    // 2. Clear assigned themes for all users
+    const usersSnap = await getDocs(collection(db, "users"));
+    const updates = [];
+    usersSnap.forEach((userDoc) => {
+      updates.push(updateDoc(doc(db, "users", userDoc.id), {
+        assignedTheme: null,
+        submittedTheme: null
+      }));
+    });
+
+    await Promise.all(updates);
+    alert("Secret Santa event reset successfully!");
+  });
+
+  // RESET EVENT 2 (Commander Hunt)
+  document.getElementById('reset-event2-btn').addEventListener('click', async () => {
+    if (!confirm("Are you sure you want to reset the Commander Hunt event? This will clear all assigned decks.")) return;
+
+    // Clear commander state for all users
+    const usersSnap = await getDocs(collection(db, "users"));
+    const updates = [];
+    usersSnap.forEach((userDoc) => {
+      updates.push(updateDoc(doc(db, "users", userDoc.id), {
+        commanders: null,
+        commanderSubmitted: false
+      }));
+    });
+
+    await Promise.all(updates);
+    alert("Commander Hunt event reset successfully! Remember to update/re-save your master commander pool.");
+  });
 
 </script>
 </body>
