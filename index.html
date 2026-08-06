@@ -140,6 +140,17 @@
       padding: 0.4rem 0.75rem;
       font-size: 0.85rem;
     }
+
+    /* THEME LIST STYLING */
+    .theme-list {
+      list-style-type: disc;
+      padding-left: 1.25rem;
+      margin-top: 0.5rem;
+      color: var(--text);
+    }
+    .theme-list li {
+      margin-bottom: 0.35rem;
+    }
   </style>
 </head>
 <body>
@@ -226,6 +237,13 @@
           </div>
         </div>
 
+        <!-- Public Theme Pool Display -->
+        <div id="all-themes-card" class="card hidden">
+          <h3>All Event Themes</h3>
+          <p style="color: var(--subtext); font-size: 0.85rem;">Here are all the themes submitted for this event:</p>
+          <ul id="all-themes-list" class="theme-list"></ul>
+        </div>
+
       </div>
 
     </div>
@@ -305,8 +323,10 @@
     appId: "1:246685754099:web:ae8577d9eb5616602acd86"
   };
 
-  // Set your admin email address here
-  const ADMIN_EMAIL = "rmillz03@gmail.com";
+  // ADMIN EMAILS
+  const SUPER_ADMIN = "rmillz03@gmail.com";
+  const GAME_DESIGN_ADMIN = "admin_santa@example.com";     // Change to the Game Design admin's email
+  const COMMANDER_HUNT_ADMIN = "admin_commander@example.com"; // Change to the Commander Hunt admin's email
 
   // Initialize
   const app = initializeApp(firebaseConfig);
@@ -347,6 +367,8 @@
   const adminPanel1 = document.getElementById('admin-panel-1');
   const randomizeThemesBtn = document.getElementById('randomize-themes-btn');
   const themeDisplay = document.getElementById('theme-display');
+  const allThemesCard = document.getElementById('all-themes-card');
+  const allThemesList = document.getElementById('all-themes-list');
 
   // Tab 2 Elements
   const regEvent2Btn = document.getElementById('reg-event2-btn');
@@ -375,7 +397,7 @@
     tabContent1.classList.add('hidden');
   });
 
-  // AUTH TOGGLE LOGIC (Switch between Login and Register)
+  // AUTH TOGGLE LOGIC
   authToggleBtn.addEventListener('click', (e) => {
     e.preventDefault();
     isRegistering = !isRegistering;
@@ -417,9 +439,21 @@
       appSection.classList.remove('hidden');
       userDisplay.textContent = user.email;
 
-      if (user.email === ADMIN_EMAIL) {
+      // Assign granular admin permissions
+      const isSuperAdmin = (user.email === SUPER_ADMIN);
+      const isGameDesignAdmin = isSuperAdmin || (user.email === GAME_DESIGN_ADMIN);
+      const isCommanderHuntAdmin = isSuperAdmin || (user.email === COMMANDER_HUNT_ADMIN);
+
+      if (isGameDesignAdmin) {
         adminPanel1.classList.remove('hidden');
+      } else {
+        adminPanel1.classList.add('hidden');
+      }
+
+      if (isCommanderHuntAdmin) {
         adminPanel2.classList.remove('hidden');
+      } else {
+        adminPanel2.classList.add('hidden');
       }
 
       setupRealtimeListeners();
@@ -445,17 +479,32 @@
     onSnapshot(doc(db, "global", "state"), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        // Tab 1 Lock Status
+        
+        // Tab 1 Lock Status & Display All Themes if available
         if (data.isLocked) {
           submissionForm.classList.add('hidden');
           submissionLockedMsg.classList.remove('hidden');
+
+          if (data.allSubmittedThemes && data.allSubmittedThemes.length > 0) {
+            allThemesList.innerHTML = '';
+            data.allSubmittedThemes.forEach(t => {
+              const li = document.createElement('li');
+              li.textContent = t;
+              allThemesList.appendChild(li);
+            });
+            allThemesCard.classList.remove('hidden');
+          } else {
+            allThemesCard.classList.add('hidden');
+          }
         } else {
           submissionForm.classList.remove('hidden');
           submissionLockedMsg.classList.add('hidden');
+          allThemesCard.classList.add('hidden');
         }
 
         // Tab 2 Pool Input Sync for Admin
-        if (data.commanderPool && currentUser.email === ADMIN_EMAIL && !adminCommanderPool.value) {
+        const isCommanderHuntAdmin = (currentUser.email === SUPER_ADMIN || currentUser.email === COMMANDER_HUNT_ADMIN);
+        if (data.commanderPool && isCommanderHuntAdmin && !adminCommanderPool.value) {
           adminCommanderPool.value = data.commanderPool.join('\n');
         }
       }
@@ -569,8 +618,11 @@
     // Update only the participants who submitted a theme
     const updates = participants.map((p, i) => updateDoc(doc(db, "users", p.id), { assignedTheme: shuffled[i] }));
     
-    // Lock the global state for the event
-    updates.push(setDoc(doc(db, "global", "state"), { isLocked: true }, { merge: true }));
+    // Save list of all themes publicly and lock global state
+    updates.push(setDoc(doc(db, "global", "state"), { 
+      isLocked: true,
+      allSubmittedThemes: originalThemes
+    }, { merge: true }));
 
     await Promise.all(updates);
     alert(`Secret Santa themes assigned to ${participants.length} participants!`);
@@ -742,8 +794,8 @@
   document.getElementById('reset-event1-btn').addEventListener('click', async () => {
     if (!confirm("Are you sure you want to reset the Secret Santa event? This will unlock submissions and clear all assigned themes.")) return;
 
-    // 1. Unlock global state
-    await setDoc(doc(db, "global", "state"), { isLocked: false }, { merge: true });
+    // 1. Unlock global state and clear saved public theme list
+    await setDoc(doc(db, "global", "state"), { isLocked: false, allSubmittedThemes: [] }, { merge: true });
 
     // 2. Clear assigned themes for all users
     const usersSnap = await getDocs(collection(db, "users"));
