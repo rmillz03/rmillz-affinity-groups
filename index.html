@@ -209,7 +209,6 @@
           <div id="submission-form">
             <input type="text" id="theme-input" placeholder="e.g. Ancient Technology & Magic" />
             <button id="save-theme-btn">Save Theme</button>
-            <!-- Constant indicator for the last saved theme -->
             <p id="last-saved-theme-display" style="font-size: 0.875rem; color: #a7f3d0; margin-top: 0.75rem;">
               <strong>Last Saved Theme:</strong> <span id="last-saved-value">""</span>
             </p>
@@ -276,7 +275,6 @@
         <div class="card">
           <h3>Your Assigned Commanders (5 Slots)</h3>
           
-          <!-- Detailed Instructions Box -->
           <div style="background: #111827; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--subtext); line-height: 1.4;">
             <strong style="color: var(--text);">📖 How to Play:</strong>
             <ul style="margin: 0.5rem 0 0 1.2rem; padding: 0;">
@@ -310,7 +308,7 @@
     signOut, onAuthStateChanged 
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { 
-    getFirestore, doc, setDoc, getDoc, getDocs, collection, onSnapshot, updateDoc, arrayUnion, arrayRemove 
+    getFirestore, doc, setDoc, getDoc, getDocs, collection, onSnapshot, updateDoc, arrayUnion 
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   // 1. YOUR FIREBASE CONFIGURATION
@@ -325,8 +323,8 @@
 
   // ADMIN EMAILS
   const SUPER_ADMIN = "rmillz03@gmail.com";
-  const GAME_DESIGN_ADMIN = "jvedro@asrcfederal.com";     // Change to the Game Design admin's email
-  const COMMANDER_HUNT_ADMIN = "ckmiec@asrcfederal.com"; // Change to the Commander Hunt admin's email
+  const GAME_DESIGN_ADMIN = "admin_santa@example.com";     
+  const COMMANDER_HUNT_ADMIN = "admin_commander@example.com"; 
 
   // Initialize
   const app = initializeApp(firebaseConfig);
@@ -439,7 +437,6 @@
       appSection.classList.remove('hidden');
       userDisplay.textContent = user.email;
 
-      // Assign granular admin permissions
       const isSuperAdmin = (user.email === SUPER_ADMIN);
       const isGameDesignAdmin = isSuperAdmin || (user.email === GAME_DESIGN_ADMIN);
       const isCommanderHuntAdmin = isSuperAdmin || (user.email === COMMANDER_HUNT_ADMIN);
@@ -480,25 +477,25 @@
       if (docSnap.exists()) {
         const data = docSnap.data();
         
-        // Tab 1 Lock Status & Display All Themes if available
+        // Tab 1 Submission Lock Status
         if (data.isLocked) {
           submissionForm.classList.add('hidden');
           submissionLockedMsg.classList.remove('hidden');
-
-          if (data.allSubmittedThemes && data.allSubmittedThemes.length > 0) {
-            allThemesList.innerHTML = '';
-            data.allSubmittedThemes.forEach(t => {
-              const li = document.createElement('li');
-              li.textContent = t;
-              allThemesList.appendChild(li);
-            });
-            allThemesCard.classList.remove('hidden');
-          } else {
-            allThemesCard.classList.add('hidden');
-          }
         } else {
           submissionForm.classList.remove('hidden');
           submissionLockedMsg.classList.add('hidden');
+        }
+
+        // Render All Submitted Themes List (Regardless of lock status as long as themes exist)
+        if (data.allSubmittedThemes && Array.isArray(data.allSubmittedThemes) && data.allSubmittedThemes.length > 0) {
+          allThemesList.innerHTML = '';
+          data.allSubmittedThemes.forEach(t => {
+            const li = document.createElement('li');
+            li.textContent = t;
+            allThemesList.appendChild(li);
+          });
+          allThemesCard.classList.remove('hidden');
+        } else {
           allThemesCard.classList.add('hidden');
         }
 
@@ -528,7 +525,6 @@
       if (docSnap.exists()) {
         userDocData = docSnap.data();
 
-        // Update theme input and constant "Last Saved Theme" indicator
         if (userDocData.submittedTheme) {
           if (!themeInput.value) {
             themeInput.value = userDocData.submittedTheme;
@@ -589,7 +585,6 @@
     const usersSnap = await getDocs(collection(db, "users"));
     const participants = [];
 
-    // ONLY include users who registered AND have a non-empty submittedTheme
     usersSnap.forEach((docSnap) => {
       const data = docSnap.data();
       if (data.regEvent1 && data.submittedTheme && data.submittedTheme.trim() !== "") {
@@ -606,7 +601,6 @@
     let shuffled = [...originalThemes];
     let isValid = false;
 
-    // Derangement algorithm to guarantee no one gets their own submission
     while (!isValid && originalThemes.length > 1) {
       for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -615,10 +609,9 @@
       isValid = shuffled.every((item, idx) => item !== originalThemes[idx]);
     }
 
-    // Update only the participants who submitted a theme
     const updates = participants.map((p, i) => updateDoc(doc(db, "users", p.id), { assignedTheme: shuffled[i] }));
     
-    // Save list of all themes publicly and lock global state
+    // Explicitly set with merge: true so existing global properties aren't overwritten
     updates.push(setDoc(doc(db, "global", "state"), { 
       isLocked: true,
       allSubmittedThemes: originalThemes
@@ -664,13 +657,11 @@
       }));
     }
 
-    // Save remaining available pool back to global state
     updates.push(updateDoc(doc(db, "global", "state"), { commanderPool: pool }));
     await Promise.all(updates);
     alert("Initial 5 Commanders assigned to all registered players!");
   });
 
-  // Render Commander UI
   function renderCommanderSlots(userData) {
     if (!userData.commanders || userData.commanders.length === 0) {
       commandersContainer.innerHTML = `<p style="color: var(--subtext); text-align: center;">Waiting on admin to start assignment...</p>`;
@@ -699,9 +690,7 @@
         </button>
       `;
 
-      // Redraw Handler
       row.querySelector('.redraw-btn').addEventListener('click', () => handleRedraw(idx));
-      // Keep Handler
       row.querySelector('.keep-btn').addEventListener('click', () => handleKeep(idx));
 
       commandersContainer.appendChild(row);
@@ -715,7 +704,6 @@
     }
   }
 
-  // Handle Individual Slot Redraw
   async function handleRedraw(slotIndex) {
     const globalSnap = await getDoc(doc(db, "global", "state"));
     let pool = (globalSnap.exists() && globalSnap.data().commanderPool) ? [...globalSnap.data().commanderPool] : [];
@@ -725,7 +713,6 @@
       return;
     }
 
-    // Draw new commander
     const randomIndex = Math.floor(Math.random() * pool.length);
     const newCommander = pool.splice(randomIndex, 1)[0];
 
@@ -733,37 +720,31 @@
     const oldCommanderName = currentCommanders[slotIndex].name;
     const remainingRedraws = currentCommanders[slotIndex].redrawsLeft - 1;
 
-    // Put old commander back into the global pool
     pool.push(oldCommanderName);
 
-    // Update current slot
     currentCommanders[slotIndex] = {
       name: newCommander,
       redrawsLeft: remainingRedraws,
       kept: false
     };
 
-    // Commit both player state and global state
     await Promise.all([
       updateDoc(doc(db, "users", currentUser.uid), { commanders: currentCommanders }),
       updateDoc(doc(db, "global", "state"), { commanderPool: pool })
     ]);
   }
 
-  // Handle Slot Keep Toggle
   async function handleKeep(slotIndex) {
     const currentCommanders = [...userDocData.commanders];
     currentCommanders[slotIndex].kept = true;
     await updateDoc(doc(db, "users", currentUser.uid), { commanders: currentCommanders });
   }
 
-  // Handle Final Submission
   submitCommandersBtn.addEventListener('click', async () => {
     const currentCommanders = [...userDocData.commanders];
     const keptCommanders = currentCommanders.filter(c => c.kept);
     const unkeptCommanders = currentCommanders.filter(c => !c.kept).map(c => c.name);
 
-    // Confirmation dialog
     const confirmSubmit = confirm(
       `Are you sure you want to submit?\n\n` +
       `• You are keeping ${keptCommanders.length} commander(s).\n` +
@@ -773,14 +754,12 @@
 
     if (!confirmSubmit) return;
 
-    // Return unkept commanders back to global pool
     if (unkeptCommanders.length > 0) {
       await updateDoc(doc(db, "global", "state"), {
         commanderPool: arrayUnion(...unkeptCommanders)
       });
     }
 
-    // Lock user submission and preserve only kept commanders
     await updateDoc(doc(db, "users", currentUser.uid), {
       commanders: keptCommanders,
       commanderSubmitted: true
@@ -789,15 +768,12 @@
     alert("Final deck selection locked and submitted!");
   });
 
-  // ================= EVENT RESET =================
   // RESET EVENT 1 (Secret Santa)
   document.getElementById('reset-event1-btn').addEventListener('click', async () => {
     if (!confirm("Are you sure you want to reset the Secret Santa event? This will unlock submissions and clear all assigned themes.")) return;
 
-    // 1. Unlock global state and clear saved public theme list
     await setDoc(doc(db, "global", "state"), { isLocked: false, allSubmittedThemes: [] }, { merge: true });
 
-    // 2. Clear assigned themes for all users
     const usersSnap = await getDocs(collection(db, "users"));
     const updates = [];
     usersSnap.forEach((userDoc) => {
@@ -815,7 +791,6 @@
   document.getElementById('reset-event2-btn').addEventListener('click', async () => {
     if (!confirm("Are you sure you want to reset the Commander Hunt event? This will clear all assigned decks.")) return;
 
-    // Clear commander state for all users
     const usersSnap = await getDocs(collection(db, "users"));
     const updates = [];
     usersSnap.forEach((userDoc) => {
